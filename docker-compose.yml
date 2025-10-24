@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    container_name: jobstream-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jobstream
+      POSTGRES_USER: jobstream_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ChangeMe123!}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - jobstream-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobstream_user -d jobstream"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # .NET API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jobstream-api
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Host=database;Port=5432;Database=jobstream;Username=jobstream_user;Password=${DB_PASSWORD:-ChangeMe123!}
+      - Encryption__Key=${ENCRYPTION_KEY}
+      - Encryption__IV=${ENCRYPTION_IV}
+      - RateLimiting__RequestsPerMinute=10
+    ports:
+      - "5000:80"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - jobstream-network
+    volumes:
+      - ./uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Angular Frontend (will be added later)
+  # Uncomment when frontend is ready
+  # frontend:
+  #   build:
+  #     context: ../JobStream.UI
+  #     dockerfile: Dockerfile
+  #   container_name: jobstream-ui
+  #   restart: unless-stopped
+  #   ports:
+  #     - "4200:80"
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - jobstream-network
+  #   environment:
+  #     - API_URL=http://api:80
+
+  # Redis (for caching and future blockchain event queue)
+  redis:
+    image: redis:7-alpine
+    container_name: jobstream-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - jobstream-network
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  jobstream-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local

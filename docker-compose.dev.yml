@@ -1,0 +1,29 @@
+version: '3.8'
+
+# Development-specific overrides
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: build  # Use build stage for hot reload
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+    volumes:
+      # Mount source code for hot reload
+      - .:/src
+    ports:
+      - "5252:80"  # Use development port
+
+  database:
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: DevPassword123
+
+  redis:
+    ports:
+      - "6379:6379"

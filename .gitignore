@@ -73,6 +73,10 @@ uploads/
 # User secrets (contains sensitive data)
 appsettings.Development.json
 
+# Docker environment variables (contains secrets)
+.env
+!.env.example
+
 # JetBrains Rider
 .idea/
 *.sln.iml
