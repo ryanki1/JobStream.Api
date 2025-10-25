@@ -37,7 +37,7 @@ services:
       - Encryption__IV=${ENCRYPTION_IV}
       - RateLimiting__RequestsPerMinute=10
     ports:
-      - "5000:80"
+      - "5001:80"
     depends_on:
       database:
         condition: service_healthy

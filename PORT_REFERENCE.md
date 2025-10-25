@@ -37,18 +37,20 @@ docker-compose up
 **Configuration:** `docker-compose.yml`
 ```yaml
 ports:
-  - "5000:80"  # host_port:container_port
+  - "5001:80"  # host_port:container_port
 ```
 
 **How it works:**
 - **Inside container:** API listens on port **80**
-- **On your machine:** Exposed as port **5000**
-- **Mapping:** `localhost:5000` → `container:80`
+- **On your machine:** Exposed as port **5001**
+- **Mapping:** `localhost:5001` → `container:80`
 
 **Access Points:**
-- API Base: http://localhost:5000
-- Swagger: http://localhost:5000/swagger
-- Health Check: http://localhost:5000/api/health
+- API Base: http://localhost:5001
+- Swagger: http://localhost:5001/swagger
+- Health Check: http://localhost:5001/api/health
+
+**Note:** Port 5001 is used instead of 5000 because macOS uses port 5000 for AirPlay Receiver.
 
 **Important:**
 - Port 5252 is **NOT** used in Docker
@@ -166,7 +168,7 @@ Or in Azure Portal:
 | Environment | Internal Port | External Access | Swagger URL |
 |-------------|---------------|-----------------|-------------|
 | `dotnet run` | 5252 | localhost:5252 | http://localhost:5252/swagger |
-| `docker-compose` | 80 | localhost:5000 | http://localhost:5000/swagger |
+| `docker-compose` | 80 | localhost:5001 | http://localhost:5001/swagger |
 | Railway | 80 | yourapp.railway.app | https://yourapp.railway.app/swagger |
 | Azure | 80 | yourapp.azurewebsites.net | https://yourapp.azurewebsites.net/swagger |
 | AWS ECS | 80 | load-balancer.amazonaws.com | https://load-balancer.amazonaws.com/swagger |
@@ -179,7 +181,7 @@ Or in Azure Portal:
 
 ```yaml
 ports:
-  - "5000:80"
+  - "5001:80"
     #  ↑    ↑
     #  │    └─ Port inside container (where app listens)
     #  └────── Port on host machine (how you access it)
@@ -188,7 +190,7 @@ ports:
 **Example:**
 ```yaml
 ports:
-  - "5000:80"   # Access: localhost:5000 → container:80
+  - "5001:80"   # Access: localhost:5001 → container:80
   - "5252:80"   # Access: localhost:5252 → container:80
   - "8080:80"   # Access: localhost:8080 → container:80
 ```
@@ -231,8 +233,8 @@ On Railway/Azure/AWS:
 
 **Solution:**
 ```bash
-# Docker uses port 5000, not 5252
-http://localhost:5000/swagger  ✅
+# Docker uses port 5001, not 5252
+http://localhost:5001/swagger  ✅
 http://localhost:5252/swagger  ❌
 ```
 
@@ -258,7 +260,7 @@ ports:
 
 ### **Development:**
 - Use `dotnet run` for debugging (port 5252)
-- Use `docker-compose up` for testing full stack (port 5000)
+- Use `docker-compose up` for testing full stack (port 5001)
 
 ### **Production:**
 - Always use port 80 inside containers
@@ -275,7 +277,7 @@ EXPOSE 80
 ```yaml
 # In docker-compose.yml - developer's choice
 ports:
-  - "5000:80"  # or "5252:80" or "8080:80"
+  - "5001:80"  # or "5252:80" or "8080:80"
 ```
 
 ---

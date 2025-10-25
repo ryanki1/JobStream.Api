@@ -2,7 +2,30 @@
 
 ## 🚀 Get Started in 5 Minutes
 
-### Step 1: Build and Run
+### Step 1: Set Up PostgreSQL
+
+The application uses PostgreSQL for database storage. You have two options:
+
+#### Option A: Run PostgreSQL via Docker (Recommended)
+
+```bash
+docker run -d \
+  --name jobstream-postgres \
+  -p 5432:5432 \
+  postgres:15-alpine
+```
+
+#### Option B: Install PostgreSQL Locally
+
+```bash
+# macOS:
+brew install postgresql@15
+brew services start postgresql@15
+```
+
+That's it! No need to manually create users or databases.
+
+### Step 2: Build and Run
 
 ```bash
 cd JobStream.Api
@@ -10,18 +33,22 @@ dotnet run
 ```
 
 The application will automatically:
-- ✅ Create the SQLite database
-- ✅ Initialize all tables
+- ✅ Create PostgreSQL user (jobstream_user) if needed
+- ✅ Create database (jobstream_dev) if needed
+- ✅ Apply all database migrations
 - ✅ Start the web server
 - ⚠️ Generate temporary encryption keys (with a warning)
 
-### Step 2: Open Swagger UI
+### Step 3: Open Swagger UI
 
-Navigate to: **https://localhost:7088/swagger**
+Navigate to: **http://localhost:5252/swagger**
 
 You'll see all 7 API endpoints documented and ready to test!
 
-### Step 3: Test the Full Registration Flow
+> **Note:** If you prefer HTTPS, run with: `dotnet run --launch-profile https`
+> Then access Swagger at: **https://localhost:7088/swagger**
+
+### Step 4: Test the Full Registration Flow
 
 #### 3.1 Start Registration
 
@@ -254,37 +281,40 @@ Try an invalid German VAT ID:
 
 ### View the Database
 
-```bash
-# Install SQLite browser (if not already installed)
-# macOS:
-brew install --cask db-browser-for-sqlite
-
-# Open the database
-open jobstream.db
-```
-
-Or use command line:
+Connect to PostgreSQL using psql or a GUI tool:
 
 ```bash
-sqlite3 jobstream.db
+# Using psql
+psql -h localhost -U jobstream_user -d jobstream_dev
 
 # List tables
-.tables
+\dt
 
 # View registrations
-SELECT Id, CompanyEmail, Status, CreatedAt FROM CompanyRegistrations;
+SELECT "Id", "CompanyEmail", "Status", "CreatedAt" FROM "CompanyRegistrations";
 
 # View documents
-SELECT * FROM RegistrationDocuments;
+SELECT * FROM "RegistrationDocuments";
 
 # Exit
-.exit
+\q
 ```
+
+Or use a GUI tool like:
+- [pgAdmin](https://www.pgadmin.org/)
+- [DBeaver](https://dbeaver.io/)
+- [DataGrip](https://www.jetbrains.com/datagrip/)
 
 ### Reset Database
 
 ```bash
-rm jobstream.db
+# Drop and recreate the database
+psql -h localhost -U jobstream_user -d postgres
+DROP DATABASE jobstream_dev;
+CREATE DATABASE jobstream_dev;
+\q
+
+# Restart the application
 dotnet run
 ```
 
@@ -335,13 +365,21 @@ If port 7088 is already in use:
 2. Change the port numbers
 3. Restart
 
-### Database Locked
+### Connection Issues
 
-If you get "database is locked" errors:
+If you can't connect to PostgreSQL:
 
 ```bash
-rm jobstream.db
-dotnet run
+# Check if PostgreSQL is running
+docker ps  # If using Docker
+# or
+brew services list  # If installed via Homebrew
+
+# Restart PostgreSQL container
+docker restart jobstream-postgres
+
+# Check connection
+psql -h localhost -U jobstream_user -d jobstream_dev
 ```
 
 ### Build Errors
@@ -387,7 +425,7 @@ After testing locally:
 
 - **Full Documentation:** [README_COMPANY_REGISTRATION.md](./README_COMPANY_REGISTRATION.md)
 - **Encryption Setup:** [ENCRYPTION_KEY_SETUP.md](./ENCRYPTION_KEY_SETUP.md)
-- **Swagger UI:** https://localhost:7088/swagger
+- **Swagger UI:** http://localhost:5252/swagger (or https://localhost:7088/swagger if using HTTPS profile)
 
 ---
 

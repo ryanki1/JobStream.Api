@@ -479,17 +479,17 @@ dotnet run
 ```
 
 The API will be available at:
-- HTTPS: https://localhost:7088
-- HTTP: http://localhost:5252
-- Swagger: https://localhost:7088/swagger
+- HTTP: http://localhost:5252 (default with `dotnet run`)
+- HTTPS: https://localhost:7088 (use `dotnet run --launch-profile https`)
+- Swagger: http://localhost:5252/swagger (or https://localhost:7088/swagger with HTTPS)
 
 ### 5. Test the API
 
 Use Swagger UI, Postman, or curl:
 
 ```bash
-# Start registration
-curl -X POST https://localhost:7088/api/company/register/start \
+# Start registration (using HTTP - default)
+curl -X POST http://localhost:5252/api/company/register/start \
   -H "Content-Type: application/json" \
   -d '{
     "companyEmail": "contact@acme.com",
@@ -525,7 +525,7 @@ dotnet run
 
 ### Manual Testing with Swagger
 
-1. Navigate to https://localhost:7088/swagger
+1. Navigate to http://localhost:5252/swagger
 2. Click on an endpoint
 3. Click "Try it out"
 4. Fill in the request body
@@ -666,7 +666,7 @@ The following were explicitly out of scope for this backend story:
 
 ## Support & Documentation
 
-- **API Documentation:** https://localhost:7088/swagger
+- **API Documentation:** http://localhost:5252/swagger
 - **Encryption Setup:** [ENCRYPTION_KEY_SETUP.md](./ENCRYPTION_KEY_SETUP.md)
 - **User Story:** See original SCRUM story document
 

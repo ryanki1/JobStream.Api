@@ -43,7 +43,7 @@ public class JobStreamDbContext : DbContext
 
             // Default values
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("datetime('now')");
+                .HasDefaultValueSql("now()");
 
             // Decimal precision for StakeAmount
             entity.Property(e => e.StakeAmount)
@@ -73,7 +73,7 @@ public class JobStreamDbContext : DbContext
 
             // Default values
             entity.Property(e => e.UploadedAt)
-                .HasDefaultValueSql("datetime('now')");
+                .HasDefaultValueSql("now()");
         });
     }
 }

@@ -12,7 +12,7 @@ JobStream uses a containerized microservices architecture:
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
 │  │   API        │  │  PostgreSQL  │  │    Redis     │  │
 │  │  (.NET 7)    │  │   Database   │  │   (Cache)    │  │
-│  │  Port 5000   │  │  Port 5432   │  │  Port 6379   │  │
+│  │  Port 5001   │  │  Port 5432   │  │  Port 6379   │  │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │
 │         │                  │                  │           │
 │         └──────────────────┴──────────────────┘          │
@@ -72,18 +72,18 @@ docker-compose ps
 
 ### 4. Access the API
 
-- **API Base URL:** http://localhost:5000
-- **Health Check:** http://localhost:5000/api/health
-- **Swagger (if enabled):** http://localhost:5000/swagger
+- **API Base URL:** http://localhost:5001
+- **Health Check:** http://localhost:5001/api/health
+- **Swagger (if enabled):** http://localhost:5001/swagger
 
 ### 5. Test the API
 
 ```bash
 # Health check
-curl http://localhost:5000/api/health
+curl http://localhost:5001/api/health
 
 # Start registration
-curl -X POST http://localhost:5000/api/company/register/start \
+curl -X POST http://localhost:5001/api/company/register/start \
   -H "Content-Type: application/json" \
   -d '{
     "companyEmail": "test@company.com",
@@ -95,7 +95,7 @@ curl -X POST http://localhost:5000/api/company/register/start \
 
 ### API Container
 - **Image:** Custom .NET 7 image
-- **Port:** 5000 (host) → 80 (container)
+- **Port:** 5001 (host) → 80 (container)
 - **Volumes:** `./uploads` for file storage
 - **Dependencies:** PostgreSQL, Redis
 
@@ -250,7 +250,7 @@ docker push <account>.dkr.ecr.us-east-1.amazonaws.com/jobstream-api:latest
 docker-compose logs api
 
 # Check if port is in use
-lsof -i :5000
+lsof -i :5001
 
 # Remove and rebuild
 docker-compose down

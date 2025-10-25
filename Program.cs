@@ -2,14 +2,21 @@ using Microsoft.EntityFrameworkCore;
 using JobStream.Api.Data;
 using JobStream.Api.Services;
 using JobStream.Api.Middleware;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-// Configure SQLite Database
+// Ensure PostgreSQL database exists before configuring DbContext (only in Development)
+if (builder.Environment.IsDevelopment())
+{
+    EnsureDatabaseExists(builder.Configuration.GetConnectionString("DefaultConnection")!);
+}
+
+// Configure PostgreSQL Database
 builder.Services.AddDbContext<JobStreamDbContext>(options =>
-    options.UseSqlite("Data Source=jobstream.db"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register Infrastructure Services
 builder.Services.AddScoped<IStorageService, MockStorageService>();
@@ -79,12 +86,12 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// Ensure database is created
+// Apply database migrations
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<JobStreamDbContext>();
-    dbContext.Database.EnsureCreated();
-    app.Logger.LogInformation("Database initialized successfully");
+    dbContext.Database.Migrate();
+    app.Logger.LogInformation("Database migrations applied successfully");
 }
 
 // Configure the HTTP request pipeline.
@@ -92,15 +99,13 @@ using (var scope = app.Services.CreateScope())
 // Add global error handling middleware (should be first)
 app.UseErrorHandling();
 
-if (app.Environment.IsDevelopment())
+// Enable Swagger in all environments for easier testing
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "JobStream API v1");
-        options.RoutePrefix = "swagger";
-    });
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "JobStream API v1");
+    options.RoutePrefix = "swagger";
+});
 
 app.UseHttpsRedirection();
 
@@ -126,3 +131,73 @@ app.Logger.LogInformation("  GET    /api/company/register/{{id}}/status");
 app.Logger.LogInformation("  POST   /api/company/register/{{id}}/submit");
 
 app.Run();
+
+// Helper method to ensure database and user exist
+static void EnsureDatabaseExists(string connectionString)
+{
+    var builder = new NpgsqlConnectionStringBuilder(connectionString);
+    var databaseName = builder.Database;
+    var username = builder.Username;
+    var password = builder.Password;
+
+    // Connect to 'postgres' database using the default postgres user
+    var postgresBuilder = new NpgsqlConnectionStringBuilder
+    {
+        Host = builder.Host,
+        Port = builder.Port,
+        Database = "postgres",
+        Username = Environment.GetEnvironmentVariable("PGUSER") ?? Environment.UserName, // Use current OS user
+        // No password for local development (trust authentication)
+    };
+
+    try
+    {
+        using var connection = new NpgsqlConnection(postgresBuilder.ToString());
+        connection.Open();
+
+        // Check if user exists
+        using var checkUserCmd = new NpgsqlCommand($"SELECT 1 FROM pg_roles WHERE rolname = '{username}'", connection);
+        var userExists = checkUserCmd.ExecuteScalar() != null;
+
+        if (!userExists)
+        {
+            Console.WriteLine($"User '{username}' does not exist. Creating...");
+
+            // Create the user
+            using var createUserCmd = new NpgsqlCommand($"CREATE USER {username} WITH PASSWORD '{password}'", connection);
+            createUserCmd.ExecuteNonQuery();
+
+            Console.WriteLine($"User '{username}' created successfully.");
+        }
+        else
+        {
+            Console.WriteLine($"User '{username}' already exists.");
+        }
+
+        // Check if database exists
+        using var checkDbCmd = new NpgsqlCommand($"SELECT 1 FROM pg_database WHERE datname = '{databaseName}'", connection);
+        var dbExists = checkDbCmd.ExecuteScalar() != null;
+
+        if (!dbExists)
+        {
+            Console.WriteLine($"Database '{databaseName}' does not exist. Creating...");
+
+            // Create the database
+            using var createDbCmd = new NpgsqlCommand($"CREATE DATABASE {databaseName} OWNER {username}", connection);
+            createDbCmd.ExecuteNonQuery();
+
+            Console.WriteLine($"Database '{databaseName}' created successfully.");
+        }
+        else
+        {
+            Console.WriteLine($"Database '{databaseName}' already exists.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error ensuring database exists: {ex.Message}");
+        Console.WriteLine($"Note: Make sure PostgreSQL is running and your current user has access.");
+        Console.WriteLine($"You can grant access with: CREATE USER {Environment.UserName} SUPERUSER;");
+        throw;
+    }
+}
