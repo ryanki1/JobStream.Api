@@ -12,6 +12,7 @@ public class JobStreamDbContext : DbContext
 
     public DbSet<CompanyRegistration> CompanyRegistrations => Set<CompanyRegistration>();
     public DbSet<RegistrationDocument> RegistrationDocuments => Set<RegistrationDocument>();
+    public DbSet<JobPosting> JobPostings => Set<JobPosting>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,6 +75,37 @@ public class JobStreamDbContext : DbContext
             // Default values
             entity.Property(e => e.UploadedAt)
                 .HasDefaultValueSql("now()");
+        });
+
+        // Configure JobPosting entity
+        modelBuilder.Entity<JobPosting>(entity =>
+        {
+            entity.ToTable("JobPostings");
+
+            // Primary key
+            entity.HasKey(e => e.Id);
+
+            // Indexes for performance
+            entity.HasIndex(e => e.CompanyId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.PublishedAt);
+            entity.HasIndex(e => e.BlockchainPostingId);
+
+            // Convert enum to string for storage
+            entity.Property(e => e.Status)
+                .HasConversion<string>();
+
+            // Default values
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()");
+
+            // JSON columns are stored as TEXT in PostgreSQL
+            entity.Property(e => e.RequiredSkillsJson)
+                .HasColumnType("TEXT");
+
+            entity.Property(e => e.PaymentStructureJson)
+                .HasColumnType("TEXT");
         });
     }
 }

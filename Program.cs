@@ -38,6 +38,10 @@ else
 
 // Register Business Logic Services
 builder.Services.AddScoped<ICompanyRegistrationService, CompanyRegistrationService>();
+builder.Services.AddScoped<IJobPostingService, JobPostingService>();
+
+// Register Blockchain Services (Mock for now)
+builder.Services.AddScoped<IBlockchainService, MockBlockchainService>();
 
 // Configure CORS for Angular frontend
 builder.Services.AddCors(options =>

@@ -3,6 +3,7 @@ using System;
 using JobStream.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace JobStream.Api.Migrations
 {
     [DbContext(typeof(JobStreamDbContext))]
-    partial class JobStreamDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251028185524_AddJobPostings")]
+    partial class AddJobPostings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
