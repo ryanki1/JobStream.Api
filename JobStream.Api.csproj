@@ -16,4 +16,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="JobStream.Api.Tests/**" />
+    <EmbeddedResource Remove="JobStream.Api.Tests/**" />
+    <None Remove="JobStream.Api.Tests/**" />
+  </ItemGroup>
+
 </Project>
