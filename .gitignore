@@ -91,3 +91,14 @@ appsettings.Development.json
 
 # Windows
 Thumbs.db
+
+# Blockchain / Hardhat
+blockchain/node_modules/
+blockchain/cache/
+blockchain/artifacts/
+blockchain/.env
+blockchain/deployment-info.json
+blockchain/coverage/
+blockchain/coverage.json
+blockchain/typechain/
+blockchain/typechain-types/

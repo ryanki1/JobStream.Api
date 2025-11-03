@@ -1,0 +1,27 @@
+{
+  "name": "blockchain",
+  "version": "1.0.0",
+  "description": "Smart Contract for JobStream - Blockchain Job Posting System",
+  "main": "index.js",
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy:local": "hardhat run scripts/deploy.js --network hardhat",
+    "deploy:mumbai": "hardhat run scripts/deploy.js --network mumbai"
+  },
+  "keywords": [
+    "blockchain",
+    "solidity",
+    "polygon",
+    "hardhat",
+    "job-posting"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@openzeppelin/contracts": "^5.4.0",
+    "dotenv": "^16.0.3",
+    "hardhat": "^2.22.0"
+  }
+}
