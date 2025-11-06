@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Logo Carousel Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .demo-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .demo-header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .demo-header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        /* Carousel Container */
+        .logo-carousel-container {
+            width: 100%;
+            max-width: 1200px;
+            overflow: hidden;
+            background: transparent;
+            padding: 40px 0;
+            position: relative;
+        }
+
+        /* Fade edges for smooth visual effect */
+        .logo-carousel-container::before,
+        .logo-carousel-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 100px;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .logo-carousel-container::before {
+            left: 0;
+            background: linear-gradient(to right, rgba(102, 126, 234, 1), rgba(102, 126, 234, 0));
+        }
+
+        .logo-carousel-container::after {
+            right: 0;
+            background: linear-gradient(to left, rgba(102, 126, 234, 1), rgba(102, 126, 234, 0));
+        }
+
+        /* Carousel Track */
+        .logo-carousel-track {
+            display: flex;
+            width: fit-content;
+            animation: scroll 30s linear infinite;
+            gap: 60px;
+        }
+
+        /* Pause animation on hover */
+        .logo-carousel-track:hover {
+            animation-play-state: paused;
+        }
+
+        /* Individual Logo Item */
+        .logo-item {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 80px;
+            padding: 0 20px;
+        }
+
+        .logo-item img {
+            max-height: 100%;
+            max-width: 180px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+            opacity: 0.8;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .logo-item img:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* Keyframe Animation */
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .logo-carousel-track {
+                gap: 40px;
+                animation-duration: 20s;
+            }
+
+            .logo-item {
+                height: 60px;
+            }
+
+            .logo-item img {
+                max-width: 120px;
+            }
+
+            .logo-carousel-container::before,
+            .logo-carousel-container::after {
+                width: 50px;
+            }
+        }
+
+        /* Instructions Section */
+        .instructions {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 800px;
+            margin-top: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .instructions h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .instructions pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .instructions code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-header">
+        <h1>🎪 Infinite Logo Carousel</h1>
+        <p>Lightweight • Responsive • Smooth Animation</p>
+    </div>
+
+    <!-- CAROUSEL COMPONENT -->
+    <div class="logo-carousel-container">
+        <div class="logo-carousel-track" id="logoCarousel">
+            <!-- Logos will be loaded dynamically from manifest.json -->
+        </div>
+    </div>
+
+    <!-- INSTRUCTIONS -->
+    <div class="instructions">
+        <h2>📋 How to Use</h2>
+        <ol>
+            <li>Upload your logo images to a server folder</li>
+            <li>Update <code>manifest.json</code> with your logo URLs</li>
+            <li>Embed the code snippet (see <code>carrd-embed.html</code>) into your Carrd site</li>
+            <li>Add/remove logos by editing the manifest file - no code changes needed!</li>
+        </ol>
+
+        <h2 style="margin-top: 30px;">⚙️ Features</h2>
+        <ul style="line-height: 1.8; margin-left: 20px;">
+            <li>✅ Smooth infinite loop animation</li>
+            <li>✅ Pause on hover</li>
+            <li>✅ Fully responsive (mobile/tablet/desktop)</li>
+            <li>✅ Transparent background</li>
+            <li>✅ Lightweight (~3KB total)</li>
+            <li>✅ No external dependencies</li>
+            <li>✅ GPU-accelerated CSS animations</li>
+        </ul>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // Configuration
+        const CONFIG = {
+            manifestUrl: 'manifest.json', // Path to your manifest file
+            animationSpeed: 30, // seconds for one full loop
+            fallbackLogos: [
+                // Fallback logos if manifest fails to load
+                'https://via.placeholder.com/180x60/667eea/ffffff?text=Logo+1',
+                'https://via.placeholder.com/180x60/764ba2/ffffff?text=Logo+2',
+                'https://via.placeholder.com/180x60/f093fb/ffffff?text=Logo+3',
+                'https://via.placeholder.com/180x60/4facfe/ffffff?text=Logo+4',
+                'https://via.placeholder.com/180x60/00f2fe/ffffff?text=Logo+5',
+                'https://via.placeholder.com/180x60/43e97b/ffffff?text=Logo+6'
+            ]
+        };
+
+        // Initialize carousel
+        async function initCarousel() {
+            const track = document.getElementById('logoCarousel');
+
+            try {
+                // Try to load from manifest
+                const response = await fetch(CONFIG.manifestUrl);
+
+                if (!response.ok) {
+                    throw new Error('Manifest not found, using fallback');
+                }
+
+                const data = await response.json();
+                const logos = data.logos || CONFIG.fallbackLogos;
+
+                renderLogos(track, logos);
+
+            } catch (error) {
+                console.warn('Loading fallback logos:', error.message);
+                renderLogos(track, CONFIG.fallbackLogos);
+            }
+        }
+
+        // Render logos (duplicate for seamless loop)
+        function renderLogos(track, logos) {
+            // Clear existing content
+            track.innerHTML = '';
+
+            // Render logos twice for seamless infinite loop
+            const renderSet = () => {
+                logos.forEach((logoUrl, index) => {
+                    const logoItem = document.createElement('div');
+                    logoItem.className = 'logo-item';
+
+                    const img = document.createElement('img');
+                    img.src = logoUrl;
+                    img.alt = `Logo ${index + 1}`;
+                    img.loading = 'lazy';
+
+                    // Error handling for broken images
+                    img.onerror = () => {
+                        console.warn(`Failed to load: ${logoUrl}`);
+                        logoItem.style.display = 'none';
+                    };
+
+                    logoItem.appendChild(img);
+                    track.appendChild(logoItem);
+                });
+            };
+
+            // Render twice for seamless loop effect
+            renderSet();
+            renderSet();
+
+            // Adjust animation speed based on number of logos
+            const totalLogos = logos.length;
+            const adjustedSpeed = Math.max(20, CONFIG.animationSpeed * (totalLogos / 6));
+            track.style.animationDuration = `${adjustedSpeed}s`;
+        }
+
+        // Start carousel when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCarousel);
+        } else {
+            initCarousel();
+        }
+    </script>
+</body>
+</html>

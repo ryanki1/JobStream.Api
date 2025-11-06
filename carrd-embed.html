@@ -1,0 +1,218 @@
+<!--
+  CARRD.CO EMBED SNIPPET
+  =====================
+
+  How to use:
+  1. In Carrd, add an "Embed" element where you want the carousel
+  2. Set embed type to "Code"
+  3. Paste this entire code snippet
+  4. Upload your manifest.json file to the same location as your Carrd site
+  5. Update the MANIFEST_URL variable below to point to your manifest file
+
+  That's it! The carousel will automatically load your logos.
+-->
+
+<div class="logo-carousel-wrapper">
+  <div class="logo-carousel-track" id="logoCarouselTrack"></div>
+</div>
+
+<style>
+  /* Carousel Container */
+  .logo-carousel-wrapper {
+    width: 100%;
+    overflow: hidden;
+    background: transparent;
+    padding: 40px 0;
+    position: relative;
+  }
+
+  /* Fade edges for smooth visual effect */
+  .logo-carousel-wrapper::before,
+  .logo-carousel-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 100px;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* Adjust these gradients to match your site background */
+  .logo-carousel-wrapper::before {
+    left: 0;
+    background: linear-gradient(to right, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+  }
+
+  .logo-carousel-wrapper::after {
+    right: 0;
+    background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+  }
+
+  /* Carousel Track */
+  .logo-carousel-track {
+    display: flex;
+    width: fit-content;
+    animation: logoScroll 30s linear infinite;
+    gap: 60px;
+  }
+
+  /* Pause animation on hover */
+  .logo-carousel-track:hover {
+    animation-play-state: paused;
+  }
+
+  /* Individual Logo Item */
+  .logo-carousel-track .logo-item {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80px;
+    padding: 0 20px;
+  }
+
+  .logo-carousel-track .logo-item img {
+    max-height: 100%;
+    max-width: 180px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    opacity: 0.7;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .logo-carousel-track .logo-item img:hover {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+
+  /* Keyframe Animation */
+  @keyframes logoScroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .logo-carousel-track {
+      gap: 40px;
+      animation-duration: 20s !important;
+    }
+
+    .logo-carousel-track .logo-item {
+      height: 60px;
+    }
+
+    .logo-carousel-track .logo-item img {
+      max-width: 120px;
+    }
+
+    .logo-carousel-wrapper::before,
+    .logo-carousel-wrapper::after {
+      width: 50px;
+    }
+  }
+</style>
+
+<script>
+  (function() {
+    'use strict';
+
+    // ===== CONFIGURATION =====
+    // UPDATE THIS URL TO POINT TO YOUR MANIFEST FILE
+    const MANIFEST_URL = 'https://yourdomain.com/manifest.json';
+
+    // Fallback logos if manifest fails to load
+    const FALLBACK_LOGOS = [
+      'https://logo.clearbit.com/stripe.com',
+      'https://logo.clearbit.com/shopify.com',
+      'https://logo.clearbit.com/salesforce.com',
+      'https://logo.clearbit.com/microsoft.com',
+      'https://logo.clearbit.com/google.com',
+      'https://logo.clearbit.com/hubspot.com'
+    ];
+    // ========================
+
+    async function initLogoCarousel() {
+      const track = document.getElementById('logoCarouselTrack');
+      if (!track) return;
+
+      let logos = FALLBACK_LOGOS;
+
+      // Try to load from manifest
+      try {
+        const response = await fetch(MANIFEST_URL);
+        if (response.ok) {
+          const data = await response.json();
+          logos = data.logos || FALLBACK_LOGOS;
+        }
+      } catch (error) {
+        console.warn('Using fallback logos:', error.message);
+      }
+
+      // Render logos twice for seamless infinite loop
+      const renderLogos = () => {
+        logos.forEach((url, index) => {
+          const item = document.createElement('div');
+          item.className = 'logo-item';
+
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = `Logo ${index + 1}`;
+          img.loading = 'lazy';
+
+          img.onerror = () => {
+            item.style.display = 'none';
+          };
+
+          item.appendChild(img);
+          track.appendChild(item);
+        });
+      };
+
+      // Render twice for seamless loop
+      renderLogos();
+      renderLogos();
+
+      // Adjust animation speed based on number of logos
+      const speed = Math.max(20, 30 * (logos.length / 6));
+      track.style.animationDuration = `${speed}s`;
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initLogoCarousel);
+    } else {
+      initLogoCarousel();
+    }
+  })();
+</script>
+
+<!--
+  CUSTOMIZATION NOTES:
+  ====================
+
+  1. BACKGROUND FADE COLORS:
+     Edit lines 34-35 and 40-41 to match your site's background color
+     Example for dark background: rgba(0, 0, 0, 1) to rgba(0, 0, 0, 0)
+
+  2. LOGO STYLING:
+     - Size: Adjust max-height (line 65) and max-width (line 66)
+     - Opacity: Change opacity value (line 69) - currently 0.7
+     - Spacing: Adjust gap value (line 52) - currently 60px
+
+  3. ANIMATION SPEED:
+     - Adjust animation-duration (line 52) - currently 30s
+     - Slower = higher number, faster = lower number
+
+  4. PAUSE ON HOVER:
+     - To disable, remove lines 55-57
+
+  5. MOBILE ADJUSTMENTS:
+     - Edit values in the @media query (lines 82-100)
+-->

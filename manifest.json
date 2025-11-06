@@ -1,0 +1,19 @@
+{
+  "logos": [
+    "https://logo.clearbit.com/stripe.com",
+    "https://logo.clearbit.com/shopify.com",
+    "https://logo.clearbit.com/salesforce.com",
+    "https://logo.clearbit.com/microsoft.com",
+    "https://logo.clearbit.com/google.com",
+    "https://logo.clearbit.com/hubspot.com",
+    "https://logo.clearbit.com/slack.com",
+    "https://logo.clearbit.com/atlassian.com",
+    "https://logo.clearbit.com/zendesk.com",
+    "https://logo.clearbit.com/adobe.com"
+  ],
+  "settings": {
+    "animationSpeed": 30,
+    "pauseOnHover": true
+  },
+  "notes": "Add or remove logo URLs from the 'logos' array. The carousel will automatically update on page load."
+}
