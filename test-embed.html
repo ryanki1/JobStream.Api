@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Carrd Embed Locally</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white; /* Change this to match your Carrd background */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .test-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .test-header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .test-header p {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-header">
+        <h1>Carrd Embed Test</h1>
+        <p>This simulates how the carousel will look when embedded in Carrd.co</p>
+    </div>
+
+    <!-- START: CARRD EMBED CODE -->
+    <div class="logo-carousel-wrapper">
+      <div class="logo-carousel-track" id="logoCarouselTrack"></div>
+    </div>
+
+    <style>
+      /* Carousel Container */
+      .logo-carousel-wrapper {
+        width: 100%;
+        overflow: hidden;
+        background: transparent;
+        padding: 40px 0;
+        position: relative;
+      }
+
+      /* Fade edges for smooth visual effect */
+      .logo-carousel-wrapper::before,
+      .logo-carousel-wrapper::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        width: 100px;
+        height: 100%;
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      /* Adjust these gradients to match your site background */
+      .logo-carousel-wrapper::before {
+        left: 0;
+        background: linear-gradient(to right, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+      }
+
+      .logo-carousel-wrapper::after {
+        right: 0;
+        background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+      }
+
+      /* Carousel Track */
+      .logo-carousel-track {
+        display: flex;
+        width: fit-content;
+        animation: logoScroll 30s linear infinite;
+        gap: 60px;
+      }
+
+      /* Pause animation on hover */
+      .logo-carousel-track:hover {
+        animation-play-state: paused;
+      }
+
+      /* Individual Logo Item */
+      .logo-carousel-track .logo-item {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 80px;
+        padding: 0 20px;
+      }
+
+      .logo-carousel-track .logo-item img {
+        max-height: 100%;
+        max-width: 180px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        opacity: 0.7;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+
+      .logo-carousel-track .logo-item img:hover {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+
+      /* Keyframe Animation */
+      @keyframes logoScroll {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-50%);
+        }
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .logo-carousel-track {
+          gap: 40px;
+          animation-duration: 20s !important;
+        }
+
+        .logo-carousel-track .logo-item {
+          height: 60px;
+        }
+
+        .logo-carousel-track .logo-item img {
+          max-width: 120px;
+        }
+
+        .logo-carousel-wrapper::before,
+        .logo-carousel-wrapper::after {
+          width: 50px;
+        }
+      }
+    </style>
+
+    <script>
+      (function() {
+        'use strict';
+
+        // ===== CONFIGURATION =====
+        // For local testing, load from the local manifest.json
+        const MANIFEST_URL = './manifest.json';
+
+        // Fallback logos if manifest fails to load
+        const FALLBACK_LOGOS = [
+          'https://logo.clearbit.com/stripe.com',
+          'https://logo.clearbit.com/shopify.com',
+          'https://logo.clearbit.com/salesforce.com',
+          'https://logo.clearbit.com/microsoft.com',
+          'https://logo.clearbit.com/google.com',
+          'https://logo.clearbit.com/hubspot.com'
+        ];
+        // ========================
+
+        async function initLogoCarousel() {
+          const track = document.getElementById('logoCarouselTrack');
+          if (!track) return;
+
+          let logos = FALLBACK_LOGOS;
+          let secondsPerCycle = 30; // default cycle duration in seconds
+
+          // Try to load from manifest
+          try {
+            const response = await fetch(MANIFEST_URL);
+            if (response.ok) {
+              const data = await response.json();
+              logos = data.logos || FALLBACK_LOGOS;
+              // Read cycle duration from settings if available
+              if (data.settings && data.settings.secondsPerCycle) {
+                secondsPerCycle = data.settings.secondsPerCycle;
+              }
+            }
+          } catch (error) {
+            console.warn('Using fallback logos:', error.message);
+          }
+
+          // Render logos enough times to fill viewport + overflow for seamless loop
+          const renderLogos = () => {
+            logos.forEach((url, index) => {
+              const item = document.createElement('div');
+              item.className = 'logo-item';
+
+              const img = document.createElement('img');
+              img.src = url;
+              img.alt = `Logo ${index + 1}`;
+              img.loading = 'lazy';
+
+              img.onerror = () => {
+                item.style.display = 'none';
+              };
+
+              item.appendChild(img);
+              track.appendChild(item);
+            });
+          };
+
+          // Calculate how many times to duplicate based on viewport width
+          // IMPORTANT: Must render an even number of sets (minimum 2) for seamless looping
+          const viewportWidth = window.innerWidth;
+          const estimatedLogoWidth = 220; // max-width (180) + padding (40) + gap (60) estimate
+          const estimatedSetWidth = logos.length * estimatedLogoWidth;
+          let numDuplicates = Math.ceil((viewportWidth * 2) / estimatedSetWidth);
+
+          // Ensure we have at least 2 sets and always an even number
+          numDuplicates = Math.max(2, numDuplicates);
+          if (numDuplicates % 2 !== 0) {
+            numDuplicates += 1; // Make it even
+          }
+
+          for (let i = 0; i < numDuplicates; i++) {
+            renderLogos();
+          }
+
+          // Wait for all images to fully load before starting animation
+          const images = Array.from(track.querySelectorAll('img'));
+          let loadedCount = 0;
+
+          const startAnimation = () => {
+            // Use requestAnimationFrame twice to ensure layout is complete
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                // Force a reflow to ensure accurate measurements
+                track.style.visibility = 'hidden';
+                const forceReflow = track.offsetHeight;
+                track.style.visibility = 'visible';
+
+                // Calculate exact width by measuring half of all rendered logos
+                // Since we render an even number of sets, half = one complete cycle
+                const logoItems = Array.from(track.children);
+                const halfPoint = logoItems.length / 2;
+                const styles = window.getComputedStyle(track);
+                const gap = parseFloat(styles.gap) || 0;
+                let totalWidth = 0;
+
+                // Sum up the width of the first half of logos including ALL gaps
+                for (let i = 0; i < halfPoint; i++) {
+                  const item = logoItems[i];
+                  const rect = item.getBoundingClientRect();
+                  totalWidth += rect.width;
+
+                  // Add gap after each item (including the last one in this half)
+                  totalWidth += gap;
+                }
+
+                // Create a dynamic keyframe animation with exact pixel values
+                const style = document.createElement('style');
+                const animationName = 'logoScroll-' + Date.now();
+
+                style.textContent = `
+                  @keyframes ${animationName} {
+                    0% { transform: translateX(0px); }
+                    100% { transform: translateX(-${totalWidth}px); }
+                  }
+                `;
+
+                document.head.appendChild(style);
+
+                // Apply the animation with exact timing
+                track.style.animation = `${animationName} ${secondsPerCycle}s linear infinite`;
+              });
+            });
+          };
+
+          images.forEach(img => {
+            if (img.complete) {
+              loadedCount++;
+            } else {
+              img.addEventListener('load', () => {
+                loadedCount++;
+                if (loadedCount === images.length) {
+                  startAnimation();
+                }
+              });
+              img.addEventListener('error', () => {
+                loadedCount++;
+                if (loadedCount === images.length) {
+                  startAnimation();
+                }
+              });
+            }
+          });
+
+          // If all images are already loaded (cached), start immediately
+          if (loadedCount === images.length) {
+            startAnimation();
+          }
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initLogoCarousel);
+        } else {
+          initLogoCarousel();
+        }
+      })();
+    </script>
+    <!-- END: CARRD EMBED CODE -->
+
+    <div class="test-header" style="margin-top: 40px;">
+        <p style="font-size: 0.9rem;">
+            <strong>Testing Tips:</strong><br>
+            • Hover over logos to see the pause effect<br>
+            • Resize your browser to test responsive behavior<br>
+            • Check browser console for any errors
+        </p>
+    </div>
+</body>
+</html>

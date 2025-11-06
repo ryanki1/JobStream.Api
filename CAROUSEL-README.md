@@ -33,7 +33,7 @@ Upload your logo images to a web-accessible location:
 
 ### Step 2: Create Your Manifest File
 
-Create a `manifest.json` file with your logo URLs:
+Create a `manifest.json` file with your logo URLs and settings:
 
 ```json
 {
@@ -41,7 +41,11 @@ Create a `manifest.json` file with your logo URLs:
     "https://yourdomain.com/logos/logo1.png",
     "https://yourdomain.com/logos/logo2.png",
     "https://yourdomain.com/logos/logo3.png"
-  ]
+  ],
+  "settings": {
+    "secondsPerCycle": 30,
+    "pauseOnHover": true
+  }
 }
 ```
 
@@ -91,13 +95,22 @@ background: linear-gradient(to right, rgba(102, 126, 234, 1), rgba(102, 126, 234
 
 ### Change Animation Speed
 
-```css
-.logo-carousel-track {
-  animation: logoScroll 30s linear infinite;  /* 30s = duration for one loop */
+Control the animation speed via the `manifest.json` file. The `secondsPerCycle` value is the **exact** duration for one complete cycle:
+
+```json
+{
+  "logos": [...],
+  "settings": {
+    "secondsPerCycle": 15
+  }
 }
 ```
 
-Lower number = faster scroll, higher number = slower scroll.
+- `secondsPerCycle: 10` = One complete cycle takes exactly 10 seconds (fast)
+- `secondsPerCycle: 30` = One complete cycle takes exactly 30 seconds (default)
+- `secondsPerCycle: 60` = One complete cycle takes exactly 60 seconds (slow)
+
+**Note:** One cycle = the time it takes for all logos to scroll through once.
 
 ### Adjust Logo Spacing
 
@@ -195,7 +208,11 @@ Simply edit your `manifest.json` file:
     "https://yourdomain.com/logo2.png",
     "https://yourdomain.com/logo3.png"
     // Add more here...
-  ]
+  ],
+  "settings": {
+    "secondsPerCycle": 30,
+    "pauseOnHover": true
+  }
 }
 ```
 

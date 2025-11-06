@@ -143,6 +143,7 @@
       if (!track) return;
 
       let logos = FALLBACK_LOGOS;
+      let secondsPerCycle = 30; // default cycle duration in seconds
 
       // Try to load from manifest
       try {
@@ -150,12 +151,16 @@
         if (response.ok) {
           const data = await response.json();
           logos = data.logos || FALLBACK_LOGOS;
+          // Read cycle duration from settings if available
+          if (data.settings && data.settings.secondsPerCycle) {
+            secondsPerCycle = data.settings.secondsPerCycle;
+          }
         }
       } catch (error) {
         console.warn('Using fallback logos:', error.message);
       }
 
-      // Render logos twice for seamless infinite loop
+      // Render logos enough times to fill viewport + overflow for seamless loop
       const renderLogos = () => {
         logos.forEach((url, index) => {
           const item = document.createElement('div');
@@ -175,13 +180,96 @@
         });
       };
 
-      // Render twice for seamless loop
-      renderLogos();
-      renderLogos();
+      // Calculate how many times to duplicate based on viewport width
+      // IMPORTANT: Must render an even number of sets (minimum 2) for seamless looping
+      const viewportWidth = window.innerWidth;
+      const estimatedLogoWidth = 220; // max-width (180) + padding (40) + gap (60) estimate
+      const estimatedSetWidth = logos.length * estimatedLogoWidth;
+      let numDuplicates = Math.ceil((viewportWidth * 2) / estimatedSetWidth);
 
-      // Adjust animation speed based on number of logos
-      const speed = Math.max(20, 30 * (logos.length / 6));
-      track.style.animationDuration = `${speed}s`;
+      // Ensure we have at least 2 sets and always an even number
+      numDuplicates = Math.max(2, numDuplicates);
+      if (numDuplicates % 2 !== 0) {
+        numDuplicates += 1; // Make it even
+      }
+
+      for (let i = 0; i < numDuplicates; i++) {
+        renderLogos();
+      }
+
+      // Wait for all images to fully load before starting animation
+      const images = Array.from(track.querySelectorAll('img'));
+      let loadedCount = 0;
+
+      const startAnimation = () => {
+        // Use requestAnimationFrame twice to ensure layout is complete
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            // Force a reflow to ensure accurate measurements
+            track.style.visibility = 'hidden';
+            const forceReflow = track.offsetHeight;
+            track.style.visibility = 'visible';
+
+            // Calculate exact width by measuring half of all rendered logos
+            // Since we render an even number of sets, half = one complete cycle
+            const logoItems = Array.from(track.children);
+            const halfPoint = logoItems.length / 2;
+            const styles = window.getComputedStyle(track);
+            const gap = parseFloat(styles.gap) || 0;
+            let totalWidth = 0;
+
+            // Sum up the width of the first half of logos including ALL gaps
+            for (let i = 0; i < halfPoint; i++) {
+              const item = logoItems[i];
+              const rect = item.getBoundingClientRect();
+              totalWidth += rect.width;
+
+              // Add gap after each item (including the last one in this half)
+              totalWidth += gap;
+            }
+
+            // Create a dynamic keyframe animation with exact pixel values
+            const style = document.createElement('style');
+            const animationName = 'logoScroll-' + Date.now();
+
+            style.textContent = `
+              @keyframes ${animationName} {
+                0% { transform: translateX(0px); }
+                100% { transform: translateX(-${totalWidth}px); }
+              }
+            `;
+
+            document.head.appendChild(style);
+
+            // Apply the animation with exact timing
+            track.style.animation = `${animationName} ${secondsPerCycle}s linear infinite`;
+          });
+        });
+      };
+
+      images.forEach(img => {
+        if (img.complete) {
+          loadedCount++;
+        } else {
+          img.addEventListener('load', () => {
+            loadedCount++;
+            if (loadedCount === images.length) {
+              startAnimation();
+            }
+          });
+          img.addEventListener('error', () => {
+            loadedCount++;
+            if (loadedCount === images.length) {
+              startAnimation();
+            }
+          });
+        }
+      });
+
+      // If all images are already loaded (cached), start immediately
+      if (loadedCount === images.length) {
+        startAnimation();
+      }
     }
 
     // Initialize when DOM is ready
@@ -206,9 +294,11 @@
      - Opacity: Change opacity value (line 69) - currently 0.7
      - Spacing: Adjust gap value (line 52) - currently 60px
 
-  3. ANIMATION SPEED:
-     - Adjust animation-duration (line 52) - currently 30s
-     - Slower = higher number, faster = lower number
+  3. CYCLE DURATION:
+     - Control via manifest.json "secondsPerCycle" setting
+     - This is the EXACT time in seconds for one complete cycle
+     - Example: "secondsPerCycle": 15 means 15 seconds for one full cycle
+     - Lower = faster (e.g., 10), Higher = slower (e.g., 60)
 
   4. PAUSE ON HOVER:
      - To disable, remove lines 55-57

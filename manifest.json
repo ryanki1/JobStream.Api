@@ -12,7 +12,8 @@
     "https://logo.clearbit.com/adobe.com"
   ],
   "settings": {
-    "animationSpeed": 30,
+    "secondsPerCycle": 5
+    ,
     "pauseOnHover": true
   },
   "notes": "Add or remove logo URLs from the 'logos' array. The carousel will automatically update on page load."
