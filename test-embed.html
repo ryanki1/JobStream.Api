@@ -76,12 +76,11 @@
         display: flex;
         width: fit-content;
         animation: logoScroll 30s linear infinite;
-        gap: 60px;
       }
 
       /* Pause animation on hover */
-      .logo-carousel-track:hover {
-        animation-play-state: paused;
+      .logo-carousel-track.pause-active:hover {
+        animation-play-state: paused!important;
       }
 
       /* Individual Logo Item */
@@ -91,7 +90,7 @@
         align-items: center;
         justify-content: center;
         height: 80px;
-        padding: 0 20px;
+        padding: 0 100px;
       }
 
       .logo-carousel-track .logo-item img {
@@ -122,7 +121,6 @@
       /* Responsive adjustments */
       @media (max-width: 768px) {
         .logo-carousel-track {
-          gap: 40px;
           animation-duration: 20s !important;
         }
 
@@ -165,7 +163,8 @@
           if (!track) return;
 
           let logos = FALLBACK_LOGOS;
-          let secondsPerCycle = 30; // default cycle duration in seconds
+          let timePerCycle = 30; // default cycle duration in seconds
+          let pause = true;
 
           // Try to load from manifest
           try {
@@ -174,8 +173,12 @@
               const data = await response.json();
               logos = data.logos || FALLBACK_LOGOS;
               // Read cycle duration from settings if available
-              if (data.settings && data.settings.secondsPerCycle) {
-                secondsPerCycle = data.settings.secondsPerCycle;
+              if (data.settings && data.settings.timePerCycle) {
+                timePerCycle = data.settings.timePerCycle;
+                pause = data.settings.pauseOnHover;
+                if (pause && !track.classList.contains('pause-active')) {
+                  track.classList.add('pause-active');
+                }
               }
             }
           } catch (error) {
@@ -205,9 +208,10 @@
           // Calculate how many times to duplicate based on viewport width
           // IMPORTANT: Must render an even number of sets (minimum 2) for seamless looping
           const viewportWidth = window.innerWidth;
-          const estimatedLogoWidth = 220; // max-width (180) + padding (40) + gap (60) estimate
-          const estimatedSetWidth = logos.length * estimatedLogoWidth;
-          let numDuplicates = Math.ceil((viewportWidth * 2) / estimatedSetWidth);
+          const logoWidth = 80; // max-width (180)
+          const logoPadding = 100;
+          const setWidth = logos.length * (logoWidth + logoPadding * 2);
+          let numDuplicates = Math.ceil((viewportWidth * 2) / setWidth);
 
           // Ensure we have at least 2 sets and always an even number
           numDuplicates = Math.max(2, numDuplicates);
@@ -224,48 +228,41 @@
           let loadedCount = 0;
 
           const startAnimation = () => {
-            // Use requestAnimationFrame twice to ensure layout is complete
             requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                // Force a reflow to ensure accurate measurements
-                track.style.visibility = 'hidden';
-                const forceReflow = track.offsetHeight;
-                track.style.visibility = 'visible';
+              // Force a reflow to ensure accurate measurements
+              // track.style.visibility = 'hidden';
+              // const forceReflow = track.offsetHeight;
+              // track.style.visibility = 'visible';
 
-                // Calculate exact width by measuring half of all rendered logos
-                // Since we render an even number of sets, half = one complete cycle
-                const logoItems = Array.from(track.children);
-                const halfPoint = logoItems.length / 2;
-                const styles = window.getComputedStyle(track);
-                const gap = parseFloat(styles.gap) || 0;
-                let totalWidth = 0;
+              // Calculate exact width by measuring half of all rendered logos
+              // Since we render an even number of sets, half = one complete cycle
+              const logoItems = Array.from(track.children);
+              const halfPoint = logoItems.length / 2;
+              const styles = window.getComputedStyle(track);
+              let totalWidth = 0;
 
-                // Sum up the width of the first half of logos including ALL gaps
-                for (let i = 0; i < halfPoint; i++) {
-                  const item = logoItems[i];
-                  const rect = item.getBoundingClientRect();
-                  totalWidth += rect.width;
+              // Sum up the width of the first half of logos
+              for (let i = 0; i < halfPoint; i++) {
+                const item = logoItems[i];
+                const rect = item.getBoundingClientRect();
+                totalWidth += rect.width;
+              }
 
-                  // Add gap after each item (including the last one in this half)
-                  totalWidth += gap;
+              // Create a dynamic keyframe animation with exact pixel values
+              const style = document.createElement('style');
+              const animationName = 'logoScroll-' + Date.now();
+
+              style.textContent = `
+                @keyframes ${animationName} {
+                  0% { transform: translateX(0px); }
+                  100% { transform: translateX(-${totalWidth}px); }
                 }
+              `;
 
-                // Create a dynamic keyframe animation with exact pixel values
-                const style = document.createElement('style');
-                const animationName = 'logoScroll-' + Date.now();
+              document.head.appendChild(style);
 
-                style.textContent = `
-                  @keyframes ${animationName} {
-                    0% { transform: translateX(0px); }
-                    100% { transform: translateX(-${totalWidth}px); }
-                  }
-                `;
-
-                document.head.appendChild(style);
-
-                // Apply the animation with exact timing
-                track.style.animation = `${animationName} ${secondsPerCycle}s linear infinite`;
-              });
+              // Apply the animation with exact timing
+              track.style.animation = `${animationName} ${timePerCycle}s linear infinite`;
             });
           };
 

@@ -79,8 +79,8 @@
         }
 
         /* Pause animation on hover */
-        .logo-carousel-track:hover {
-            animation-play-state: paused;
+        .logo-carousel-track.pause-active:hover {
+            animation-play-state: paused!important;
         }
 
         /* Individual Logo Item */
@@ -213,174 +213,159 @@
 
     <!-- JAVASCRIPT -->
     <script>
-        // Configuration
-        const CONFIG = {
-            manifestUrl: 'manifest.json', // Path to your manifest file
-            secondsPerCycle: 30, // seconds for one full cycle
-            fallbackLogos: [
-                // Fallback logos if manifest fails to load
-                'https://via.placeholder.com/180x60/667eea/ffffff?text=Logo+1',
-                'https://via.placeholder.com/180x60/764ba2/ffffff?text=Logo+2',
-                'https://via.placeholder.com/180x60/f093fb/ffffff?text=Logo+3',
-                'https://via.placeholder.com/180x60/4facfe/ffffff?text=Logo+4',
-                'https://via.placeholder.com/180x60/00f2fe/ffffff?text=Logo+5',
-                'https://via.placeholder.com/180x60/43e97b/ffffff?text=Logo+6'
-            ]
-        };
+      (function() {
+        'use strict';
 
-        // Initialize carousel
-        async function initCarousel() {
-            const track = document.getElementById('logoCarousel');
+        // ===== CONFIGURATION =====
+        // For local testing, load from the local manifest.json
+        const MANIFEST_URL = './manifest.json';
 
-            try {
-                // Try to load from manifest
-                const response = await fetch(CONFIG.manifestUrl);
+        // Fallback logos if manifest fails to load
+        const FALLBACK_LOGOS = [
+          'https://logo.clearbit.com/stripe.com',
+          'https://logo.clearbit.com/shopify.com',
+          'https://logo.clearbit.com/salesforce.com',
+          'https://logo.clearbit.com/microsoft.com',
+          'https://logo.clearbit.com/google.com',
+          'https://logo.clearbit.com/hubspot.com'
+        ];
+        // ========================
 
-                if (!response.ok) {
-                    throw new Error('Manifest not found, using fallback');
+        async function initLogoCarousel() {
+          const track = document.getElementById('logoCarouselTrack');
+          if (!track) return;
+
+          let logos = FALLBACK_LOGOS;
+          let timePerCycle = 30; // default cycle duration in seconds
+          let pause = true;
+
+          // Try to load from manifest
+          try {
+            const response = await fetch(MANIFEST_URL);
+            if (response.ok) {
+              const data = await response.json();
+              logos = data.logos || FALLBACK_LOGOS;
+              // Read cycle duration from settings if available
+              if (data.settings && data.settings.timePerCycle) {
+                timePerCycle = data.settings.timePerCycle;
+                pause = data.settings.pauseOnHover;
+                if (pause && !track.classList.contains('pause-active')) {
+                  track.classList.add('pause-active');
                 }
-
-                const data = await response.json();
-                const logos = data.logos || CONFIG.fallbackLogos;
-
-                // Update cycle duration from manifest if available
-                if (data.settings && data.settings.secondsPerCycle) {
-                    CONFIG.secondsPerCycle = data.settings.secondsPerCycle;
-                }
-
-                renderLogos(track, logos);
-
-            } catch (error) {
-                console.warn('Loading fallback logos:', error.message);
-                renderLogos(track, CONFIG.fallbackLogos);
+              }
             }
-        }
+          } catch (error) {
+            console.warn('Using fallback logos:', error.message);
+          }
 
-        // Render logos (duplicate for seamless loop)
-        function renderLogos(track, logos) {
-            // Clear existing content
-            track.innerHTML = '';
+          // Render logos enough times to fill viewport + overflow for seamless loop
+          const renderLogos = () => {
+            logos.forEach((url, index) => {
+              const item = document.createElement('div');
+              item.className = 'logo-item';
 
-            // Render logos enough times to fill viewport + overflow for seamless loop
-            const renderSet = () => {
-                logos.forEach((logoUrl, index) => {
-                    const logoItem = document.createElement('div');
-                    logoItem.className = 'logo-item';
+              const img = document.createElement('img');
+              img.src = url;
+              img.alt = `Logo ${index + 1}`;
+              img.loading = 'lazy';
 
-                    const img = document.createElement('img');
-                    img.src = logoUrl;
-                    img.alt = `Logo ${index + 1}`;
-                    img.loading = 'lazy';
+              img.onerror = () => {
+                item.style.display = 'none';
+              };
 
-                    // Error handling for broken images
-                    img.onerror = () => {
-                        console.warn(`Failed to load: ${logoUrl}`);
-                        logoItem.style.display = 'none';
-                    };
-
-                    logoItem.appendChild(img);
-                    track.appendChild(logoItem);
-                });
-            };
-
-            // Calculate how many times to duplicate based on viewport width
-            // IMPORTANT: Must render an even number of sets (minimum 2) for seamless looping
-            const viewportWidth = window.innerWidth;
-            const estimatedLogoWidth = 220; // max-width (180) + padding (40) + gap (60) estimate
-            const estimatedSetWidth = logos.length * estimatedLogoWidth;
-            let numDuplicates = Math.ceil((viewportWidth * 2) / estimatedSetWidth);
-
-            // Ensure we have at least 2 sets and always an even number
-            numDuplicates = Math.max(2, numDuplicates);
-            if (numDuplicates % 2 !== 0) {
-                numDuplicates += 1; // Make it even
-            }
-
-            for (let i = 0; i < numDuplicates; i++) {
-                renderSet();
-            }
-
-            // Wait for all images to fully load before starting animation
-            const images = Array.from(track.querySelectorAll('img'));
-            let loadedCount = 0;
-
-            const startAnimation = () => {
-                // Use requestAnimationFrame twice to ensure layout is complete
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        // Force a reflow to ensure accurate measurements
-                        track.style.visibility = 'hidden';
-                        const forceReflow = track.offsetHeight;
-                        track.style.visibility = 'visible';
-
-                        // Calculate exact width by measuring half of all rendered logos
-                        // Since we render an even number of sets, half = one complete cycle
-                        const logoItems = Array.from(track.children);
-                        const halfPoint = logoItems.length / 2;
-                        const styles = window.getComputedStyle(track);
-                        const gap = parseFloat(styles.gap) || 0;
-                        let totalWidth = 0;
-
-                        // Sum up the width of the first half of logos including ALL gaps
-                        for (let i = 0; i < halfPoint; i++) {
-                            const item = logoItems[i];
-                            const rect = item.getBoundingClientRect();
-                            totalWidth += rect.width;
-
-                            // Add gap after each item (including the last one in this half)
-                            totalWidth += gap;
-                        }
-
-                        // Create a dynamic keyframe animation with exact pixel values
-                        const styleSheet = document.styleSheets[0];
-                        const animationName = 'scroll-' + Date.now();
-
-                        const keyframes = `
-                            @keyframes ${animationName} {
-                                0% { transform: translateX(0px); }
-                                100% { transform: translateX(-${totalWidth}px); }
-                            }
-                        `;
-
-                        styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
-
-                        // Apply the animation with exact timing
-                        track.style.animation = `${animationName} ${CONFIG.secondsPerCycle}s linear infinite`;
-                    });
-                });
-            };
-
-            images.forEach(img => {
-                if (img.complete) {
-                    loadedCount++;
-                } else {
-                    img.addEventListener('load', () => {
-                        loadedCount++;
-                        if (loadedCount === images.length) {
-                            startAnimation();
-                        }
-                    });
-                    img.addEventListener('error', () => {
-                        loadedCount++;
-                        if (loadedCount === images.length) {
-                            startAnimation();
-                        }
-                    });
-                }
+              item.appendChild(img);
+              track.appendChild(item);
             });
+          };
 
-            // If all images are already loaded (cached), start immediately
-            if (loadedCount === images.length) {
-                startAnimation();
+          // Calculate how many times to duplicate based on viewport width
+          // IMPORTANT: Must render an even number of sets (minimum 2) for seamless looping
+          const viewportWidth = window.innerWidth;
+          const logoWidth = 80; // max-width (180)
+          const logoPadding = 100;
+          const setWidth = logos.length * (logoWidth + logoPadding * 2);
+          let numDuplicates = Math.ceil((viewportWidth * 2) / setWidth);
+
+          // Ensure we have at least 2 sets and always an even number
+          numDuplicates = Math.max(2, numDuplicates);
+          if (numDuplicates % 2 !== 0) {
+            numDuplicates += 1; // Make it even
+          }
+
+          for (let i = 0; i < numDuplicates; i++) {
+            renderLogos();
+          }
+
+          // Wait for all images to fully load before starting animation
+          const images = Array.from(track.querySelectorAll('img'));
+          let loadedCount = 0;
+
+          const startAnimation = () => {
+            requestAnimationFrame(() => {
+              // Calculate exact width by measuring half of all rendered logos
+              // Since we render an even number of sets, half = one complete cycle
+              const logoItems = Array.from(track.children);
+              const halfPoint = logoItems.length / 2;
+              const styles = window.getComputedStyle(track);
+              let totalWidth = 0;
+
+              // Sum up the width of the first half of logos
+              for (let i = 0; i < halfPoint; i++) {
+                const item = logoItems[i];
+                const rect = item.getBoundingClientRect();
+                totalWidth += rect.width;
+              }
+
+              // Create a dynamic keyframe animation with exact pixel values
+              const style = document.createElement('style');
+              const animationName = 'logoScroll-' + Date.now();
+
+              style.textContent = `
+                @keyframes ${animationName} {
+                  0% { transform: translateX(0px); }
+                  100% { transform: translateX(-${totalWidth}px); }
+                }
+              `;
+
+              document.head.appendChild(style);
+
+              // Apply the animation with exact timing
+              track.style.animation = `${animationName} ${timePerCycle}s linear infinite`;
+            });
+          };
+
+          images.forEach(img => {
+            if (img.complete) {
+              loadedCount++;
+            } else {
+              img.addEventListener('load', () => {
+                loadedCount++;
+                if (loadedCount === images.length) {
+                  startAnimation();
+                }
+              });
+              img.addEventListener('error', () => {
+                loadedCount++;
+                if (loadedCount === images.length) {
+                  startAnimation();
+                }
+              });
             }
+          });
+
+          // If all images are already loaded (cached), start immediately
+          if (loadedCount === images.length) {
+            startAnimation();
+          }
         }
 
-        // Start carousel when DOM is ready
+        // Initialize when DOM is ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initCarousel);
+          document.addEventListener('DOMContentLoaded', initLogoCarousel);
         } else {
-            initCarousel();
+          initLogoCarousel();
         }
+      })();
     </script>
 </body>
 </html>

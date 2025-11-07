@@ -54,12 +54,11 @@
     display: flex;
     width: fit-content;
     animation: logoScroll 30s linear infinite;
-    gap: 60px;
   }
 
   /* Pause animation on hover */
-  .logo-carousel-track:hover {
-    animation-play-state: paused;
+  .logo-carousel-track.pause-active:hover {
+    animation-play-state: paused!important;
   }
 
   /* Individual Logo Item */
@@ -69,7 +68,7 @@
     align-items: center;
     justify-content: center;
     height: 80px;
-    padding: 0 20px;
+    padding: 0 100px;
   }
 
   .logo-carousel-track .logo-item img {
@@ -100,7 +99,6 @@
   /* Responsive adjustments */
   @media (max-width: 768px) {
     .logo-carousel-track {
-      gap: 40px;
       animation-duration: 20s !important;
     }
 
@@ -124,8 +122,8 @@
     'use strict';
 
     // ===== CONFIGURATION =====
-    // UPDATE THIS URL TO POINT TO YOUR MANIFEST FILE
-    const MANIFEST_URL = 'https://yourdomain.com/manifest.json';
+    // For local testing, load from the local manifest.json
+    const MANIFEST_URL = './manifest.json';
 
     // Fallback logos if manifest fails to load
     const FALLBACK_LOGOS = [
@@ -143,7 +141,8 @@
       if (!track) return;
 
       let logos = FALLBACK_LOGOS;
-      let secondsPerCycle = 30; // default cycle duration in seconds
+      let timePerCycle = 30; // default cycle duration in seconds
+      let pause = true;
 
       // Try to load from manifest
       try {
@@ -152,8 +151,12 @@
           const data = await response.json();
           logos = data.logos || FALLBACK_LOGOS;
           // Read cycle duration from settings if available
-          if (data.settings && data.settings.secondsPerCycle) {
-            secondsPerCycle = data.settings.secondsPerCycle;
+          if (data.settings && data.settings.timePerCycle) {
+            timePerCycle = data.settings.timePerCycle;
+            pause = data.settings.pauseOnHover;
+            if (pause && !track.classList.contains('pause-active')) {
+              track.classList.add('pause-active');
+            }
           }
         }
       } catch (error) {
@@ -183,9 +186,10 @@
       // Calculate how many times to duplicate based on viewport width
       // IMPORTANT: Must render an even number of sets (minimum 2) for seamless looping
       const viewportWidth = window.innerWidth;
-      const estimatedLogoWidth = 220; // max-width (180) + padding (40) + gap (60) estimate
-      const estimatedSetWidth = logos.length * estimatedLogoWidth;
-      let numDuplicates = Math.ceil((viewportWidth * 2) / estimatedSetWidth);
+      const logoWidth = 80; // max-width (180)
+      const logoPadding = 100;
+      const setWidth = logos.length * (logoWidth + logoPadding * 2);
+      let numDuplicates = Math.ceil((viewportWidth * 2) / setWidth);
 
       // Ensure we have at least 2 sets and always an even number
       numDuplicates = Math.max(2, numDuplicates);
@@ -202,48 +206,36 @@
       let loadedCount = 0;
 
       const startAnimation = () => {
-        // Use requestAnimationFrame twice to ensure layout is complete
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            // Force a reflow to ensure accurate measurements
-            track.style.visibility = 'hidden';
-            const forceReflow = track.offsetHeight;
-            track.style.visibility = 'visible';
+          // Calculate exact width by measuring half of all rendered logos
+          // Since we render an even number of sets, half = one complete cycle
+          const logoItems = Array.from(track.children);
+          const halfPoint = logoItems.length / 2;
+          const styles = window.getComputedStyle(track);
+          let totalWidth = 0;
 
-            // Calculate exact width by measuring half of all rendered logos
-            // Since we render an even number of sets, half = one complete cycle
-            const logoItems = Array.from(track.children);
-            const halfPoint = logoItems.length / 2;
-            const styles = window.getComputedStyle(track);
-            const gap = parseFloat(styles.gap) || 0;
-            let totalWidth = 0;
+          // Sum up the width of the first half of logos
+          for (let i = 0; i < halfPoint; i++) {
+            const item = logoItems[i];
+            const rect = item.getBoundingClientRect();
+            totalWidth += rect.width;
+          }
 
-            // Sum up the width of the first half of logos including ALL gaps
-            for (let i = 0; i < halfPoint; i++) {
-              const item = logoItems[i];
-              const rect = item.getBoundingClientRect();
-              totalWidth += rect.width;
+          // Create a dynamic keyframe animation with exact pixel values
+          const style = document.createElement('style');
+          const animationName = 'logoScroll-' + Date.now();
 
-              // Add gap after each item (including the last one in this half)
-              totalWidth += gap;
+          style.textContent = `
+            @keyframes ${animationName} {
+              0% { transform: translateX(0px); }
+              100% { transform: translateX(-${totalWidth}px); }
             }
+          `;
 
-            // Create a dynamic keyframe animation with exact pixel values
-            const style = document.createElement('style');
-            const animationName = 'logoScroll-' + Date.now();
+          document.head.appendChild(style);
 
-            style.textContent = `
-              @keyframes ${animationName} {
-                0% { transform: translateX(0px); }
-                100% { transform: translateX(-${totalWidth}px); }
-              }
-            `;
-
-            document.head.appendChild(style);
-
-            // Apply the animation with exact timing
-            track.style.animation = `${animationName} ${secondsPerCycle}s linear infinite`;
-          });
+          // Apply the animation with exact timing
+          track.style.animation = `${animationName} ${timePerCycle}s linear infinite`;
         });
       };
 
@@ -286,23 +278,22 @@
   ====================
 
   1. BACKGROUND FADE COLORS:
-     Edit lines 34-35 and 40-41 to match your site's background color
+     Edit lines 43-44 and 48-40 to match your site's background color
      Example for dark background: rgba(0, 0, 0, 1) to rgba(0, 0, 0, 0)
 
   2. LOGO STYLING:
-     - Size: Adjust max-height (line 65) and max-width (line 66)
-     - Opacity: Change opacity value (line 69) - currently 0.7
-     - Spacing: Adjust gap value (line 52) - currently 60px
+     - Opacity: Change opacity value (line 80) - currently 0.7
+     - Logo width + padding: Adjust width of consistent logos (lines 284-285) - currently 280px
 
   3. CYCLE DURATION:
-     - Control via manifest.json "secondsPerCycle" setting
-     - This is the EXACT time in seconds for one complete cycle
-     - Example: "secondsPerCycle": 15 means 15 seconds for one full cycle
-     - Lower = faster (e.g., 10), Higher = slower (e.g., 60)
+     - Control via manifest.json "timePerCycle" setting
+     - This is the time for one complete cycle
+     - Example: "timePerCycle": 15 is twice as fast as 30 for one full cycle
+     - Lower = faster
 
   4. PAUSE ON HOVER:
-     - To disable, remove lines 55-57
+     - To disable set to false in manifest.json
 
   5. MOBILE ADJUSTMENTS:
-     - Edit values in the @media query (lines 82-100)
+     - Edit values in the @media query (lines 100-117)
 -->

@@ -5,15 +5,10 @@
     "https://logo.clearbit.com/salesforce.com",
     "https://logo.clearbit.com/microsoft.com",
     "https://logo.clearbit.com/google.com",
-    "https://logo.clearbit.com/hubspot.com",
-    "https://logo.clearbit.com/slack.com",
-    "https://logo.clearbit.com/atlassian.com",
-    "https://logo.clearbit.com/zendesk.com",
-    "https://logo.clearbit.com/adobe.com"
+    "https://logo.clearbit.com/hubspot.com"
   ],
   "settings": {
-    "secondsPerCycle": 5
-    ,
+    "timePerCycle": 5,
     "pauseOnHover": true
   },
   "notes": "Add or remove logo URLs from the 'logos' array. The carousel will automatically update on page load."
