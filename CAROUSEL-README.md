@@ -43,7 +43,7 @@ Create a `manifest.json` file with your logo URLs and settings:
     "https://yourdomain.com/logos/logo3.png"
   ],
   "settings": {
-    "secondsPerCycle": 30,
+    "timePerCycle": 30,
     "pauseOnHover": true
   }
 }
@@ -58,11 +58,12 @@ Upload this file to the same location as your logos.
 3. Set embed type to **Code**
 4. Open `carrd-embed.html` and copy the entire contents
 5. Paste into the Carrd embed element
-6. Update line 97 with your manifest URL:
+6. Update line 128 with your manifest URL:
    ```javascript
    const MANIFEST_URL = 'https://yourdomain.com/manifest.json';
    ```
-7. Save and publish!
+7. Adjust the logo spacing by changing the padding value (line 71) if desired
+8. Save and publish!
 
 ## 🎨 Customization
 
@@ -95,38 +96,40 @@ background: linear-gradient(to right, rgba(102, 126, 234, 1), rgba(102, 126, 234
 
 ### Change Animation Speed
 
-Control the animation speed via the `manifest.json` file. The `secondsPerCycle` value is the **exact** duration for one complete cycle:
+Control the animation speed via the `manifest.json` file. The `timePerCycle` value is the **exact** duration for one complete cycle:
 
 ```json
 {
   "logos": [...],
   "settings": {
-    "secondsPerCycle": 15
+    "timePerCycle": 15
   }
 }
 ```
 
-- `secondsPerCycle: 10` = One complete cycle takes exactly 10 seconds (fast)
-- `secondsPerCycle: 30` = One complete cycle takes exactly 30 seconds (default)
-- `secondsPerCycle: 60` = One complete cycle takes exactly 60 seconds (slow)
+- `timePerCycle: 10` = One complete cycle takes exactly 10 seconds (fast)
+- `timePerCycle: 30` = One complete cycle takes exactly 30 seconds (default)
+- `timePerCycle: 60` = One complete cycle takes exactly 60 seconds (slow)
 
 **Note:** One cycle = the time it takes for all logos to scroll through once.
 
 ### Adjust Logo Spacing
 
 ```css
-.logo-carousel-track {
-  gap: 60px;  /* Space between logos */
+.logo-carousel-track .logo-item {
+  padding: 0 100px;  /* Horizontal padding around each logo */
 }
 ```
 
 ### Remove Pause on Hover
 
-Delete lines 55-57:
+Set `pauseOnHover` to `false` in your `manifest.json`:
 
-```css
-.logo-carousel-track:hover {
-  animation-play-state: paused;
+```json
+{
+  "settings": {
+    "pauseOnHover": false
+  }
 }
 ```
 
@@ -210,7 +213,7 @@ Simply edit your `manifest.json` file:
     // Add more here...
   ],
   "settings": {
-    "secondsPerCycle": 30,
+    "timePerCycle": 30,
     "pauseOnHover": true
   }
 }

@@ -75,7 +75,6 @@
             display: flex;
             width: fit-content;
             animation: scroll 30s linear infinite;
-            gap: 60px;
         }
 
         /* Pause animation on hover */
@@ -90,7 +89,7 @@
             align-items: center;
             justify-content: center;
             height: 80px;
-            padding: 0 20px;
+            padding: 0 100px;
         }
 
         .logo-item img {
@@ -122,8 +121,7 @@
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .logo-carousel-track {
-                gap: 40px;
-                animation-duration: 20s;
+                animation-duration: 20s !important;
             }
 
             .logo-item {
@@ -184,7 +182,7 @@
 
     <!-- CAROUSEL COMPONENT -->
     <div class="logo-carousel-container">
-        <div class="logo-carousel-track" id="logoCarousel">
+        <div class="logo-carousel-track" id="logoCarouselTrack">
             <!-- Logos will be loaded dynamically from manifest.json -->
         </div>
     </div>

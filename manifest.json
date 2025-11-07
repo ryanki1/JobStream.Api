@@ -1,14 +1,14 @@
 {
   "logos": [
-    "https://logo.clearbit.com/stripe.com",
-    "https://logo.clearbit.com/shopify.com",
-    "https://logo.clearbit.com/salesforce.com",
-    "https://logo.clearbit.com/microsoft.com",
-    "https://logo.clearbit.com/google.com",
-    "https://logo.clearbit.com/hubspot.com"
+    "https://cdn.worldvectorlogo.com/logos/stripe-4.svg",
+    "https://cdn.worldvectorlogo.com/logos/shopify.svg",
+    "https://cdn.worldvectorlogo.com/logos/salesforce-2.svg",
+    "https://cdn.worldvectorlogo.com/logos/microsoft-5.svg",
+    "https://cdn.worldvectorlogo.com/logos/google-1-1.svg",
+    "https://cdn.worldvectorlogo.com/logos/hubspot.svg"
   ],
   "settings": {
-    "timePerCycle": 5,
+    "timePerCycle": 15,
     "pauseOnHover": true
   },
   "notes": "Add or remove logo URLs from the 'logos' array. The carousel will automatically update on page load."
