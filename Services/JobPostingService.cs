@@ -34,15 +34,18 @@ public class JobPostingService : IJobPostingService
 
         try
         {
-            // Validate company exists (CompanyId in request should match Id.ToString() in CompanyRegistrations)
-            var companyExists = await _dbContext.CompanyRegistrations
-                .AnyAsync(c => c.Id.ToString() == request.CompanyId);
+            // Validate company exists and get wallet address
+            var company = await _dbContext.CompanyRegistrations
+                .FirstOrDefaultAsync(c => c.Id.ToString() == request.CompanyId);
 
-            if (!companyExists)
+            if (company == null)
             {
                 _logger.LogWarning("Company {CompanyId} not found", request.CompanyId);
                 throw new InvalidOperationException($"Company with ID '{request.CompanyId}' does not exist");
             }
+
+            // Use wallet address from request if provided, otherwise from company registration
+            var walletAddress = request.WalletAddress ?? company.WalletAddress ?? string.Empty;
 
             // Serialize complex fields to JSON
             var requiredSkillsJson = JsonSerializer.Serialize(request.RequiredSkills);
@@ -53,7 +56,7 @@ public class JobPostingService : IJobPostingService
                 request.CompanyId,
                 request.Title,
                 request.Description,
-                request.WalletAddress ?? string.Empty);
+                walletAddress);
 
             _logger.LogInformation(
                 "Blockchain draft created with ID {BlockchainPostingId} and transaction hash {TransactionHash}",
@@ -75,7 +78,7 @@ public class JobPostingService : IJobPostingService
                 PaymentStructureJson = paymentStructureJson,
                 AcceptanceCriteria = request.AcceptanceCriteria,
                 Status = JobPostingStatus.Draft,
-                CreatedByWalletAddress = request.WalletAddress,
+                CreatedByWalletAddress = walletAddress,
                 CreationTransactionHash = transactionHash,
                 CreatedAt = DateTime.UtcNow
             };

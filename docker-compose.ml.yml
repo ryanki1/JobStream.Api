@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: jobstream-ml-verification
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVICE_NAME=jobstream-ml-verification
+      - PORT=8000
+      - LOG_LEVEL=INFO
+      - MODEL_CACHE_DIR=/models
+    volumes:
+      - ./ml-service:/app
+      - ml-model-cache:/models
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - jobstream-network
+    restart: unless-stopped
+
+volumes:
+  ml-model-cache:
+    driver: local
+
+networks:
+  jobstream-network:
+    driver: bridge

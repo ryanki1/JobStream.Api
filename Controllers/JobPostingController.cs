@@ -78,7 +78,7 @@ public class JobPostingController : ControllerBase
         try
         {
             // TODO: Replace with authenticated company ID from JWT token when auth is implemented
-            const string companyId = "test-company-123";
+            const string companyId = "197c8ae3-aa7b-41f0-be6e-e60e13f63232";
 
             _logger.LogInformation("PUT /api/v1/jobpostings/{PostingId}/publish called by company: {CompanyId}", postingId, companyId);
 
@@ -134,7 +134,7 @@ public class JobPostingController : ControllerBase
         try
         {
             // TODO: Replace with authenticated company ID from JWT token when auth is implemented
-            const string companyId = "test-company-123";
+            const string companyId = "197c8ae3-aa7b-41f0-be6e-e60e13f63232";
 
             _logger.LogInformation("PUT /api/v1/jobpostings/{PostingId} called by company: {CompanyId}", postingId, companyId);
 
@@ -289,7 +289,7 @@ public class JobPostingController : ControllerBase
         try
         {
             // TODO: Replace with authenticated company ID from JWT token when auth is implemented
-            const string companyId = "test-company-123";
+            const string companyId = "197c8ae3-aa7b-41f0-be6e-e60e13f63232";
 
             _logger.LogInformation("GET /api/v1/jobpostings/drafts called by company: {CompanyId}", companyId);
 
