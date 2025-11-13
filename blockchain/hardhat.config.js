@@ -17,17 +17,17 @@ module.exports = {
     hardhat: {
       chainId: 1337
     },
-    // Polygon Mumbai Testnet
-    mumbai: {
-      url: process.env.POLYGON_MUMBAI_RPC_URL || "https://rpc-mumbai.maticvigil.com",
+    // Polygon Amoy Testnet (replaces Mumbai)
+    amoy: {
+      url: process.env.POLYGON_AMOY_RPC_URL || "https://rpc-amoy.polygon.technology",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 80001,
-      gasPrice: 8000000000 // 8 gwei
+      chainId: 80002,
+      gasPrice: 25000000000 // 25 gwei (minimum required)
     }
   },
   etherscan: {
     apiKey: {
-      polygonMumbai: process.env.POLYGONSCAN_API_KEY || ""
+      polygonAmoy: process.env.POLYGONSCAN_API_KEY || ""
     }
   },
   paths: {

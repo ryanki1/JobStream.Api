@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using JobStream.Api.Data;
 using JobStream.Api.Services;
 using JobStream.Api.Middleware;
+using JobStream.Api.Configuration;
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,8 +41,44 @@ else
 builder.Services.AddScoped<ICompanyRegistrationService, CompanyRegistrationService>();
 builder.Services.AddScoped<IJobPostingService, JobPostingService>();
 
-// Register Blockchain Services (Mock for now)
-builder.Services.AddScoped<IBlockchainService, MockBlockchainService>();
+// Configure Blockchain Settings
+builder.Services.Configure<BlockchainSettings>(options =>
+{
+    // Load from appsettings.json
+    builder.Configuration.GetSection("Blockchain").Bind(options);
+
+    // Override with environment variables if present (more secure for secrets)
+    var walletAddress = Environment.GetEnvironmentVariable("BLOCKCHAIN_WALLET_ADDRESS");
+    var privateKey = Environment.GetEnvironmentVariable("BLOCKCHAIN_PRIVATE_KEY");
+    var rpcUrl = Environment.GetEnvironmentVariable("BLOCKCHAIN_RPC_URL");
+    var contractAddress = Environment.GetEnvironmentVariable("BLOCKCHAIN_CONTRACT_ADDRESS");
+    var useMock = Environment.GetEnvironmentVariable("USE_MOCK_BLOCKCHAIN");
+
+    if (!string.IsNullOrEmpty(walletAddress)) options.WalletAddress = walletAddress;
+    if (!string.IsNullOrEmpty(privateKey)) options.PrivateKey = privateKey;
+    if (!string.IsNullOrEmpty(rpcUrl)) options.RpcUrl = rpcUrl;
+    if (!string.IsNullOrEmpty(contractAddress)) options.ContractAddress = contractAddress;
+    if (!string.IsNullOrEmpty(useMock)) options.UseMockService = bool.Parse(useMock);
+});
+
+// Register Blockchain Services
+// Use MockBlockchainService by default or when UseMockService is true
+// Switch to PolygonBlockchainService when ready for real blockchain integration
+var blockchainSettings = new BlockchainSettings();
+builder.Configuration.GetSection("Blockchain").Bind(blockchainSettings);
+var useMock = Environment.GetEnvironmentVariable("USE_MOCK_BLOCKCHAIN");
+if (!string.IsNullOrEmpty(useMock)) blockchainSettings.UseMockService = bool.Parse(useMock);
+
+if (blockchainSettings.UseMockService)
+{
+    builder.Services.AddScoped<IBlockchainService, MockBlockchainService>();
+    Console.WriteLine("Using MockBlockchainService for development");
+}
+else
+{
+    builder.Services.AddScoped<IBlockchainService, PolygonBlockchainService>();
+    Console.WriteLine($"Using PolygonBlockchainService - Network ChainId: {blockchainSettings.ChainId}");
+}
 
 // Configure CORS for Angular frontend
 builder.Services.AddCors(options =>

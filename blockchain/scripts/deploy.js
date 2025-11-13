@@ -11,15 +11,15 @@ async function main() {
 
   // Get deployer balance
   const balance = await hre.ethers.provider.getBalance(deployer.address);
-  console.log("💰 Deployer balance:", hre.ethers.formatEther(balance), "MATIC");
+  console.log("💰 Deployer balance:", hre.ethers.utils.formatEther(balance), "POL");
 
   // Deploy the contract
   const JobPosting = await hre.ethers.getContractFactory("JobPosting");
   const jobPosting = await JobPosting.deploy();
 
-  await jobPosting.waitForDeployment();
+  await jobPosting.deployed();
 
-  const contractAddress = await jobPosting.getAddress();
+  const contractAddress = jobPosting.address;
   console.log("✅ JobPosting contract deployed to:", contractAddress);
 
   // Verify initial state
@@ -53,11 +53,11 @@ async function main() {
   );
   console.log("💾 Deployment info saved to deployment-info.json");
 
-  if (hre.network.name === "mumbai") {
+  if (hre.network.name === "amoy") {
     console.log("\n🔍 To verify the contract on Polygonscan, run:");
-    console.log(`npx hardhat verify --network mumbai ${contractAddress}`);
-    console.log("\n🌐 View on PolygonScan Mumbai:");
-    console.log(`https://mumbai.polygonscan.com/address/${contractAddress}`);
+    console.log(`npx hardhat verify --network amoy ${contractAddress}`);
+    console.log("\n🌐 View on PolygonScan Amoy:");
+    console.log(`https://amoy.polygonscan.com/address/${contractAddress}`);
   }
 }
 
