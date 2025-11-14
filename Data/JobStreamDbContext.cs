@@ -13,6 +13,7 @@ public class JobStreamDbContext : DbContext
     public DbSet<CompanyRegistration> CompanyRegistrations => Set<CompanyRegistration>();
     public DbSet<RegistrationDocument> RegistrationDocuments => Set<RegistrationDocument>();
     public DbSet<JobPosting> JobPostings => Set<JobPosting>();
+    public DbSet<MLVerificationResult> MLVerificationResults => Set<MLVerificationResult>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -106,6 +107,54 @@ public class JobStreamDbContext : DbContext
 
             entity.Property(e => e.PaymentStructureJson)
                 .HasColumnType("TEXT");
+        });
+
+        // Configure MLVerificationResult entity
+        modelBuilder.Entity<MLVerificationResult>(entity =>
+        {
+            entity.ToTable("MLVerificationResults");
+
+            // Primary key
+            entity.HasKey(e => e.Id);
+
+            // Indexes for performance
+            entity.HasIndex(e => e.RegistrationId);
+            entity.HasIndex(e => e.RiskLevel);
+            entity.HasIndex(e => e.VerifiedAt);
+
+            // Foreign key relationship
+            entity.HasOne(e => e.Registration)
+                .WithMany()
+                .HasForeignKey(e => e.RegistrationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Convert enum to string for storage
+            entity.Property(e => e.RiskLevel)
+                .HasConversion<string>();
+
+            // Decimal precision
+            entity.Property(e => e.OverallRiskScore)
+                .HasPrecision(5, 2); // 0-100 with 2 decimal places
+
+            entity.Property(e => e.Confidence)
+                .HasPrecision(3, 2); // 0-1 with 2 decimal places
+
+            // JSON columns stored as TEXT
+            entity.Property(e => e.WebIntelligenceJson)
+                .HasColumnType("TEXT");
+
+            entity.Property(e => e.SentimentAnalysisJson)
+                .HasColumnType("TEXT");
+
+            entity.Property(e => e.RiskFlagsJson)
+                .HasColumnType("TEXT");
+
+            entity.Property(e => e.RecommendationsJson)
+                .HasColumnType("TEXT");
+
+            // Default value
+            entity.Property(e => e.VerifiedAt)
+                .HasDefaultValueSql("now()");
         });
     }
 }

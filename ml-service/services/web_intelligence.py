@@ -42,7 +42,7 @@ class WebIntelligenceService:
         news_task = self.search_news(request.company_name)
 
         # Await all tasks
-        handelsregister_match, website_active, website_age, linkedin_data, news_data = await asyncio.gather(
+        handelsregister_match, website_data, linkedin_data, news_data = await asyncio.gather(
             handelsregister_task,
             website_task,
             linkedin_task,
@@ -53,8 +53,8 @@ class WebIntelligenceService:
         # Handle any exceptions
         if isinstance(handelsregister_match, Exception):
             handelsregister_match = False
-        if isinstance(website_active, Exception):
-            website_active = (False, None)
+        if isinstance(website_data, Exception):
+            website_data = (False, None)
         if isinstance(linkedin_data, Exception):
             linkedin_data = (False, None)
         if isinstance(news_data, Exception):
@@ -62,8 +62,8 @@ class WebIntelligenceService:
 
         return WebIntelligence(
             companies_house_match=handelsregister_match,
-            website_active=website_active[0] if isinstance(website_active, tuple) else website_active,
-            website_age=website_active[1] if isinstance(website_active, tuple) else None,
+            website_active=website_data[0] if isinstance(website_data, tuple) else False,
+            website_age=website_data[1] if isinstance(website_data, tuple) else None,
             linkedin_verified=linkedin_data[0] if isinstance(linkedin_data, tuple) else False,
             linkedin_followers=linkedin_data[1] if isinstance(linkedin_data, tuple) else None,
             news_articles_found=news_data[0] if isinstance(news_data, tuple) else 0,

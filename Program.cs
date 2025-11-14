@@ -41,6 +41,25 @@ else
 builder.Services.AddScoped<ICompanyRegistrationService, CompanyRegistrationService>();
 builder.Services.AddScoped<IJobPostingService, JobPostingService>();
 
+// Register ML Verification Service with Resilience Pipeline
+builder.Services.AddHttpClient<IMLVerificationService, MLVerificationService>()
+    .AddStandardResilienceHandler(options =>
+    {
+        // Retry policy: 3 attempts with exponential backoff
+        options.Retry.MaxRetryAttempts = 3;
+        options.Retry.BackoffType = Polly.DelayBackoffType.Exponential;
+        options.Retry.UseJitter = true;
+
+        // Circuit breaker: 50% failure threshold
+        options.CircuitBreaker.FailureRatio = 0.5;
+        options.CircuitBreaker.MinimumThroughput = 5;
+        options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(30);
+        options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(30);
+
+        // Timeout: 10 seconds per request
+        options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(10);
+    });
+
 // Configure Blockchain Settings
 builder.Services.Configure<BlockchainSettings>(options =>
 {
@@ -170,6 +189,14 @@ app.Logger.LogInformation("  POST   /api/company/register/{{id}}/documents");
 app.Logger.LogInformation("  POST   /api/company/register/{{id}}/financial-verification");
 app.Logger.LogInformation("  GET    /api/company/register/{{id}}/status");
 app.Logger.LogInformation("  POST   /api/company/register/{{id}}/submit");
+app.Logger.LogInformation("Admin API endpoints:");
+app.Logger.LogInformation("  GET    /api/admin/registrations/pending");
+app.Logger.LogInformation("  GET    /api/admin/registrations/{{id}}");
+app.Logger.LogInformation("  POST   /api/admin/registrations/{{id}}/verify-ml");
+app.Logger.LogInformation("  GET    /api/admin/registrations/{{id}}/ml-history");
+app.Logger.LogInformation("  POST   /api/admin/registrations/{{id}}/approve");
+app.Logger.LogInformation("  POST   /api/admin/registrations/{{id}}/reject");
+app.Logger.LogInformation("  GET    /api/admin/statistics");
 
 app.Run();
 
