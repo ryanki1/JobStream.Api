@@ -8,24 +8,34 @@ from models.responses import SentimentAnalysis, SentimentType, SentimentSource, 
 
 class SentimentAnalyzer:
     """
-    PyTorch-based sentiment analyzer using DistilBERT
+    PyTorch-based sentiment analyzer using multilingual BERT
 
     This service uses a pre-trained transformer model to analyze sentiment
     of text related to companies (reviews, news, descriptions, etc.)
+
+    Supports multiple languages including:
+    - German (primary target market)
+    - English (international companies)
+    - French, Spanish, Italian, Dutch
     """
 
-    def __init__(self, model_name: str = "distilbert-base-uncased-finetuned-sst-2-english"):
+    def __init__(self, model_name: str = "nlptown/bert-base-multilingual-uncased-sentiment"):
         """
         Initialize sentiment analyzer
 
         Args:
             model_name: Hugging Face model identifier
+                Default: nlptown/bert-base-multilingual-uncased-sentiment
+                - Trained on product reviews in 6 languages (de, en, es, fr, it, nl)
+                - Outputs 5-star rating (1-5 stars)
+                - Perfect for German/English business descriptions
         """
         self.model_name = model_name
         self.tokenizer = None
         self.model = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"🖥️  Using device: {self.device}")
+        print(f"🌍 Multilingual model: Supports German, English, and 4 other languages")
 
     async def load_model(self):
         """Load the PyTorch model and tokenizer (async to not block startup)"""
